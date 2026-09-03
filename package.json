@@ -1,0 +1,43 @@
+{
+  "name": "cyberia-audio",
+  "version": "0.1.0",
+  "description": "Terminal-native audio toolkit for game developers who are not musicians. Semantic game music and SFX.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "cyberia-audio": "./bin/cyberia-audio.js"
+  },
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node bin/cyberia-audio.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "game-audio",
+    "procedural-audio",
+    "sfx",
+    "game-music",
+    "web-audio",
+    "cli"
+  ],
+  "dependencies": {
+    "@audio/speaker": "^2.3.3",
+    "@strudel/core": "^1.2.5",
+    "@strudel/mini": "^1.2.5",
+    "@strudel/tonal": "^1.2.5",
+    "commander": "^14.0.0",
+    "node-wav": "^0.0.2",
+    "tonal": "^6.4.3",
+    "web-audio-api": "^1.5.4"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}
