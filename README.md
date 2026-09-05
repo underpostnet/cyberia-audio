@@ -29,9 +29,11 @@ cyberia-audio sfx explosion
 cyberia-audio music victory
 cyberia-audio sfx coin --volume 0.5
 cyberia-audio sfx coin --volume 0.5 --play
+cyberia-audio music combat -o ./records/theme.wav
+cyberia-audio music mystery --output /home/user/custom-loop.wav
 ```
 
-The CLI has two domains: `sfx <id>` and `music <id>`. Every valid command writes a 16-bit PCM WAV to `records/<id>.wav` in the **current working directory** and exits after recording by default. Pass `--play` to play the generated sound after the WAV is saved. Repeating a command overwrites that file. Recording finishes before playback starts, so a device failure leaves the WAV available. Invalid IDs list the available assets and exit with status 1. Ctrl-C stops active playback.
+The CLI has two domains: `sfx <id>` and `music <id>`. Every valid command writes a 16-bit PCM WAV to `records/<id>.wav` in the **current working directory** and exits after recording by default. Pass `-o <path>` or `--output <path>` to write the WAV to a custom absolute path (for example `/home/dd/cyberia-audio/records/combat.wav`) or a relative path (for example `./records/coin.wav`); missing parent directories are created. Pass `--play` to play the generated sound after the WAV is saved. Repeating a command overwrites that file. Recording finishes before playback starts, so a device failure leaves the WAV available. Invalid IDs list the available assets and exit with status 1. Ctrl-C stops active playback.
 
 ## Vocabulary
 

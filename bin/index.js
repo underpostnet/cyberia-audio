@@ -17,9 +17,10 @@ for (const type of ['sfx', 'music']) {
     .description(`Render and record a semantic ${type === 'sfx' ? 'sound effect' : 'music phrase'}.`)
     .option('--play', 'play the generated sound after the WAV has been saved')
     .option('--volume <value>', 'gain from 0 to 1', number)
+    .option('-o, --output <path>', 'write the WAV to this absolute or relative path instead of records/<id>.wav')
     .action(async (id, options) => {
       const params = options.volume === undefined ? {} : { volume: options.volume };
-      const result = await dispatch(type, id, params, { record: true, play: false });
+      const result = await dispatch(type, id, params, { record: true, play: false, path: options.output });
       console.log(`Recorded ${type}/${id} → ${result.path}`);
       if (options.play) {
         // Render and resolve exactly once; playback consumes the recorded samples.

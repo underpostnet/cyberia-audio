@@ -55,6 +55,20 @@ describe('CLI and WAV integration', () => {
       'coin.wav', 'combat.wav', 'exploration.wav', 'explosion.wav', 'heal.wav', 'mystery.wav', 'player-hit.wav', 'shoot.wav', 'ui-click.wav', 'victory.wav',
     ]);
   });
+  it('writes -o output to a custom absolute or relative path', async () => {
+    const relative = join(directory, 'custom', 'combat.wav');
+    const { stdout } = await cli('music', 'combat', '-o', './custom/combat.wav');
+    expect(stdout).toContain(relative);
+    const decodedRelative = wav.decode(await readFile(relative));
+    expect(decodedRelative.sampleRate).toBe(44100);
+    expect(decodedRelative.channelData[0].length).toBe((await audio.music.render('combat')).channelData[0].length);
+    const absolute = join(directory, 'custom', 'victory.wav');
+    await cli('music', 'victory', '--output', absolute);
+    const decodedAbsolute = wav.decode(await readFile(absolute));
+    expect(decodedAbsolute.sampleRate).toBe(44100);
+    expect(decodedAbsolute.channelData[0].length).toBe((await audio.music.render('victory')).channelData[0].length);
+    expect((await readdir(directory + '/records')).includes('combat.wav')).toBe(true); // default path still used without -o
+  });
   it('supports programmatic recording from a different working directory', async () => {
     const code = `import audio from ${JSON.stringify(api)}; console.log(await audio.sfx.record('coin', { volume: 0.3 }));`;
     const { stdout } = await exec(process.execPath, ['--input-type=module', '-e', code], { cwd: directory });
