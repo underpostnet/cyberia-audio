@@ -24,7 +24,8 @@ describe('CLI and WAV integration', () => {
   });
   for (const [type, id] of [
     ['sfx', 'coin'], ['sfx', 'shoot'], ['sfx', 'explosion'], ['sfx', 'heal'],
-    ['sfx', 'player-hit'], ['sfx', 'ui-click'], ['music', 'exploration'], ['music', 'combat'], ['music', 'victory'],
+    ['sfx', 'player-hit'], ['sfx', 'ui-click'],
+    ['music', 'exploration'], ['music', 'combat'], ['music', 'mystery'], ['music', 'victory'],
   ]) {
     it(`${type} ${id}: uses the API render and writes records/${id}.wav`, async () => {
       const { stdout, stderr } = await cli(type, id);
@@ -51,7 +52,7 @@ describe('CLI and WAV integration', () => {
     const decoded = wav.decode(await readFile(join(directory, 'records/coin.wav')));
     expect(decoded.channelData[0].every((sample) => sample === 0)).toBe(true);
     expect((await readdir(join(directory, 'records'))).sort()).toEqual([
-      'coin.wav', 'combat.wav', 'exploration.wav', 'explosion.wav', 'heal.wav', 'player-hit.wav', 'shoot.wav', 'ui-click.wav', 'victory.wav',
+      'coin.wav', 'combat.wav', 'exploration.wav', 'explosion.wav', 'heal.wav', 'mystery.wav', 'player-hit.wav', 'shoot.wav', 'ui-click.wav', 'victory.wav',
     ]);
   });
   it('supports programmatic recording from a different working directory', async () => {

@@ -9,7 +9,7 @@ import { validateAudioResult } from '../src/validation.js';
 const root = fileURLToPath(new URL('../src/audio-modules/', import.meta.url));
 const ids = {
   sfx: ['coin', 'explosion', 'heal', 'player-hit', 'shoot', 'ui-click'],
-  music: ['combat', 'exploration', 'victory'],
+  music: ['combat', 'exploration', 'mystery', 'victory'],
 };
 const digest = (result) => {
   const hash = createHash('sha256');

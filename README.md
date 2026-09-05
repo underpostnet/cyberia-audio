@@ -45,9 +45,10 @@ The CLI has two domains: `sfx <id>` and `music <id>`. Every valid command writes
 | SFX    | [ui-click](src/audio-modules/sfx/ui-click/README.md)         | A brief, dry interface tap                   | 0.065 s          |
 | Music  | [exploration](src/audio-modules/music/exploration/README.md) | Spacious harmony and answering bell motifs   | 20 s             |
 | Music  | [combat](src/audio-modules/music/combat/README.md)           | Syncopated bass, drums, and harmonic tension | 13.33 s          |
+| Music  | [mystery](src/audio-modules/music/mystery/README.md)         | Low pulsing tones and a lurking half-lit theme | 21.33 s          |
 | Music  | [victory](src/audio-modules/music/victory/README.md)         | Ascending fanfare and a resolved cadence     | 9.2 s            |
 
-The music is arranged in phrases with melody, harmony, bass, and independent instrumental voices. Exploration and combat carry note releases across their loop boundary. Victory ends with a cadence and release.
+The music is arranged in phrases with melody, harmony, bass, and independent instrumental voices. Exploration, combat, and mystery carry note releases across their loop boundary. Victory ends with a cadence and release.
 
 ## Programmatic API
 
