@@ -8,14 +8,14 @@
     "node": ">=24"
   },
   "bin": {
-    "cyberia-audio": "./bin/cyberia-audio.js"
+    "cyberia-audio": "./bin/index.js"
   },
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js"
   },
   "scripts": {
-    "start": "node bin/cyberia-audio.js",
+    "start": "node bin/index.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -27,6 +27,7 @@
     "web-audio",
     "cli"
   ],
+  "files": ["src/", "bin/", "README.md", "LICENSE"],
   "dependencies": {
     "@audio/speaker": "^2.3.3",
     "@strudel/core": "^1.2.5",

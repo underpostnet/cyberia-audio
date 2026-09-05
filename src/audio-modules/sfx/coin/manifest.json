@@ -1,0 +1,12 @@
+{
+  "id": "coin",
+  "type": "sfx",
+  "tags": [
+    "reward",
+    "collectible",
+    "positive"
+  ],
+  "author": "cyberia-audio",
+  "version": "0.1.0",
+  "duration": 0.42
+}
