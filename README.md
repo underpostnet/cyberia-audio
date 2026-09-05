@@ -1,3 +1,15 @@
+<p align="center">
+  <img src="https://www.cyberiaonline.com/assets/splash/apple-touch-icon-precomposed.png" alt="CYBERIA online"/>
+</p>
+
+<div align="center">
+
+<h1>cyberia audio</h1>
+
+</div>
+
+**Path:** `cyberia-audio/` · **Language:** Javascript · **Role:** Semantic audio toolkit
+
 **cyberia-audio is a semantic, event-driven procedural audio engine for game developers who are not musicians.**
 
 Describe the game event. The asset owns the sound.
@@ -37,18 +49,18 @@ The CLI has two domains: `sfx <id>` and `music <id>`. Every valid command writes
 
 ## Vocabulary
 
-| Domain | ID                                                           | Communicates                                 | Default duration |
-| ------ | ------------------------------------------------------------ | -------------------------------------------- | ---------------- |
-| SFX    | [coin](src/audio-modules/sfx/coin/README.md)                 | A bright, upward reward                      | 0.42 s           |
-| SFX    | [shoot](src/audio-modules/sfx/shoot/README.md)               | A sharp weapon transient                     | 0.24 s           |
-| SFX    | [explosion](src/audio-modules/sfx/explosion/README.md)       | Wide debris and low rumble                   | 1.8 s            |
-| SFX    | [heal](src/audio-modules/sfx/heal/README.md)                 | A soft, ascending recovery gesture           | 1.5 s            |
-| SFX    | [player-hit](src/audio-modules/sfx/player-hit/README.md)     | Rough, downward damage feedback              | 0.38 s           |
-| SFX    | [ui-click](src/audio-modules/sfx/ui-click/README.md)         | A brief, dry interface tap                   | 0.065 s          |
-| Music  | [exploration](src/audio-modules/music/exploration/README.md) | Spacious harmony and answering bell motifs   | 20 s             |
-| Music  | [combat](src/audio-modules/music/combat/README.md)           | Syncopated bass, drums, and harmonic tension | 13.33 s          |
+| Domain | ID                                                           | Communicates                                   | Default duration |
+| ------ | ------------------------------------------------------------ | ---------------------------------------------- | ---------------- |
+| SFX    | [coin](src/audio-modules/sfx/coin/README.md)                 | A bright, upward reward                        | 0.42 s           |
+| SFX    | [shoot](src/audio-modules/sfx/shoot/README.md)               | A sharp weapon transient                       | 0.24 s           |
+| SFX    | [explosion](src/audio-modules/sfx/explosion/README.md)       | Wide debris and low rumble                     | 1.8 s            |
+| SFX    | [heal](src/audio-modules/sfx/heal/README.md)                 | A soft, ascending recovery gesture             | 1.5 s            |
+| SFX    | [player-hit](src/audio-modules/sfx/player-hit/README.md)     | Rough, downward damage feedback                | 0.38 s           |
+| SFX    | [ui-click](src/audio-modules/sfx/ui-click/README.md)         | A brief, dry interface tap                     | 0.065 s          |
+| Music  | [exploration](src/audio-modules/music/exploration/README.md) | Spacious harmony and answering bell motifs     | 20 s             |
+| Music  | [combat](src/audio-modules/music/combat/README.md)           | Syncopated bass, drums, and harmonic tension   | 13.33 s          |
 | Music  | [mystery](src/audio-modules/music/mystery/README.md)         | Low pulsing tones and a lurking half-lit theme | 21.33 s          |
-| Music  | [victory](src/audio-modules/music/victory/README.md)         | Ascending fanfare and a resolved cadence     | 9.2 s            |
+| Music  | [victory](src/audio-modules/music/victory/README.md)         | Ascending fanfare and a resolved cadence       | 9.2 s            |
 
 The music is arranged in phrases with melody, harmony, bass, and independent instrumental voices. Exploration, combat, and mystery carry note releases across their loop boundary. Victory ends with a cadence and release.
 
