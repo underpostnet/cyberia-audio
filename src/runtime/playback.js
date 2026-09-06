@@ -1,4 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises';
+import { interleave16 } from './pcm.js';
 
 const active = new Map();
 
@@ -8,19 +9,7 @@ export function stop(type) {
   }
 }
 
-export function interleave16(channelData, start, end) {
-  const channels = channelData.length;
-  const buffer = Buffer.allocUnsafe((end - start) * channels * 2);
-  for (let frame = start; frame < end; frame++) {
-    for (let channel = 0; channel < channels; channel++) {
-      const sample = channelData[channel][frame];
-      buffer.writeInt16LE(Math.round(sample * (sample < 0 ? 32768 : 32767)), ((frame - start) * channels + channel) * 2);
-    }
-  }
-  return buffer;
-}
-
-export async function play(type, { sampleRate, channelData }) {
+export async function play(type, { sampleRate, channelData }, { loop = false } = {}) {
   // Lazy loading keeps offline rendering independent of native audio initialization.
   const { default: speaker } = await import('@audio/speaker');
   let write;
@@ -46,10 +35,14 @@ export async function play(type, { sampleRate, channelData }) {
     try {
       const frames = channelData[0].length;
       // Backpressure keeps at most one small chunk in flight and allows prompt stopping.
-      for (let start = 0; start < frames && !stopped; start += 2048) {
-        const chunk = interleave16(channelData, start, Math.min(frames, start + 2048));
-        await new Promise((resolve, reject) => write(chunk, (error) => error ? reject(error) : resolve()));
-      }
+      // A loop repeats through the same open device rather than reopening one per pass, so a
+      // phrase written to join itself does so with no gap at the seam.
+      do {
+        for (let start = 0; start < frames && !stopped; start += 2048) {
+          const chunk = interleave16(channelData, start, Math.min(frames, start + 2048));
+          await new Promise((resolve, reject) => write(chunk, (error) => error ? reject(error) : resolve()));
+        }
+      } while (loop && !stopped);
       // Silence drains both the native ring and the device's final hardware buffer.
       // Avoid an uncancellable flush-poll loop when stop() closes the device.
       if (!stopped) {
