@@ -21,7 +21,12 @@ export function render({ sampleRate, duration, volume, warmth }) {
     }
   }
   for (const samples of channelData) {
-    for (let i = 0; i < frames; i++) samples[i] *= volume * Math.min(1, (frames - 1 - i) / (sampleRate * duration * 0.18));
+    for (let i = 0; i < frames; i++) samples[i] *= Math.min(1, (frames - 1 - i) / (sampleRate * duration * 0.18));
   }
+  // volume is the fraction of full scale the peak reaches, so volume 1 is as loud as this gets.
+  let peak = 0;
+  for (const channel of channelData) for (const value of channel) peak = Math.max(peak, Math.abs(value));
+  const master = peak > 0 ? (volume * 0.98) / peak : 0;
+  for (const channel of channelData) for (let i = 0; i < channel.length; i++) channel[i] *= master;
   return { sampleRate, channelData, loop: false };
 }

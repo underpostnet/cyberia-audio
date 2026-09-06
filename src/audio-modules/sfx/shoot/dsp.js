@@ -16,7 +16,12 @@ export function render({ sampleRate, duration, volume, power, seed }) {
     const punch = Math.sin(phase) * Math.exp(-progress * 12);
     const tail = body * Math.exp(-progress * 7);
     const envelope = Math.min(1, t / 0.0006) * Math.min(1, (samples.length - 1 - i) / (sampleRate * 0.01));
-    samples[i] = Math.tanh((crack * 1.15 + punch * (0.25 + power * 0.3) + tail * 0.8) * 1.4) * envelope * volume * 0.85;
+    samples[i] = Math.tanh((crack * 1.15 + punch * (0.25 + power * 0.3) + tail * 0.8) * 1.4) * envelope;
   }
+  // volume is the fraction of full scale the peak reaches, so volume 1 is as loud as this gets.
+  let peak = 0;
+  for (const value of samples) peak = Math.max(peak, Math.abs(value));
+  const master = peak > 0 ? (volume * 0.98) / peak : 0;
+  for (let i = 0; i < samples.length; i++) samples[i] *= master;
   return { sampleRate, channelData: [samples], loop: false };
 }

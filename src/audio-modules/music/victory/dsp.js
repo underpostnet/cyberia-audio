@@ -73,11 +73,15 @@ export function render({ sampleRate, volume, bpm, brilliance }) {
   bell(88, 12.5);
   bell(91, 13);
 
+  // The closing release belongs to the phrase, so it is applied before the master stage measures
+  // the peak; otherwise the fade could pull the loudest sample away from the headroom target.
+  for (const channel of channelData) {
+    for (let i = 0; i < frames; i++) channel[i] *= Math.min(1, (frames - 1 - i) / (sampleRate * 0.4));
+  }
   let peak = 0;
   for (const channel of channelData) for (const value of channel) peak = Math.max(peak, Math.abs(value));
-  const gain = volume * Math.min(1, 0.85 / (peak || 1));
-  for (const channel of channelData) {
-    for (let i = 0; i < frames; i++) channel[i] *= gain * Math.min(1, (frames - 1 - i) / (sampleRate * 0.4));
-  }
+  // volume is the fraction of full scale the peak reaches, so volume 1 is as loud as this gets.
+  const master = peak > 0 ? (volume * 0.98) / peak : 0;
+  for (const channel of channelData) for (let i = 0; i < frames; i++) channel[i] *= master;
   return { sampleRate, channelData, loop: false };
 }

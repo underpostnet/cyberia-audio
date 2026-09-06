@@ -2,13 +2,13 @@ import { resolveParams } from '../../../validation.js';
 
 export const params = Object.freeze({
   "sampleRate": 44100,
-  "volume": 0.65,
+  "volume": 0.32,
   "bpm": 96,
   "cycles": 2,
   "density": 0.45
 });
 
-const rules = {
+export const rules = {
   "sampleRate": [
     22050,
     96000,

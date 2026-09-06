@@ -10,9 +10,9 @@ A low bass heartbeat pulses under tremolo strings that move from A minor add9 to
 
 ## Parameters and output
 
-`bpm` (60–140, default 90), `cycles` (1–3 four-bar phrases, default 2), `tension` (0–1, default 0.6), integer `seed` (default 2153). Default volume is 0.7.
+`bpm` (60–140, default 90), `cycles` (1–3 four-bar phrases, default 2), `tension` (0–1, default 0.6), integer `seed` (default 2153). Default volume is 0.46.
 
-All parameters are optional. `sampleRate` accepts integers from 22050 to 96000 (default 44100); `volume` accepts 0–1 (default 0.7). Seeds accept integers from 0 to 4294967295. Invalid or unknown parameters are rejected.
+All parameters are optional. `sampleRate` accepts integers from 22050 to 96000 (default 44100); `volume` accepts 0–1 (default 0.46). Seeds accept integers from 0 to 4294967295. Invalid or unknown parameters are rejected. `volume` is the fraction of full scale the loudest sample reaches, so `1` is as loud as this render gets without clipping.
 
 Stereo; duration is `cycles * 16 * 60 / bpm` seconds (about 21.33 by default). `loop: true` marks a phrase suitable for repetition; playback plays it once. Rendering returns `{ sampleRate, channelData: Float32Array[], loop }` with samples in [-1, 1]. Rendering never opens a speaker or writes files. Playback and 16-bit WAV encoding consume the same samples.
 

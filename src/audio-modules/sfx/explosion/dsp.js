@@ -32,8 +32,13 @@ export function render({ sampleRate, duration, volume, weight, seed }) {
       // Remove DC/very slow drift from the noise without losing audible sub-bass.
       dc[c] = value - previous[c] + Math.exp(-2 * Math.PI * 15 / sampleRate) * dc[c];
       previous[c] = value;
-      channelData[c][i] = Math.tanh(dc[c]) * attack * release * volume * 0.9;
+      channelData[c][i] = Math.tanh(dc[c]) * attack * release;
     }
   }
+  // volume is the fraction of full scale the peak reaches, so volume 1 is as loud as this gets.
+  let peak = 0;
+  for (const channel of channelData) for (const value of channel) peak = Math.max(peak, Math.abs(value));
+  const master = peak > 0 ? (volume * 0.98) / peak : 0;
+  for (const channel of channelData) for (let i = 0; i < channel.length; i++) channel[i] *= master;
   return { sampleRate, channelData, loop: false };
 }

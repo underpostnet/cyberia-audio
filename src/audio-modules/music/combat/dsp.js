@@ -98,7 +98,8 @@ export function render({ sampleRate, volume, bpm, rounds, intensity, seed }) {
 
   let peak = 0;
   for (const channel of channelData) for (const value of channel) peak = Math.max(peak, Math.abs(value));
-  const gain = volume * Math.min(1, 0.88 / (peak || 1));
-  for (const channel of channelData) for (let i = 0; i < frames; i++) channel[i] *= gain;
+  // volume is the fraction of full scale the peak reaches, so volume 1 is as loud as this gets.
+  const master = peak > 0 ? (volume * 0.98) / peak : 0;
+  for (const channel of channelData) for (let i = 0; i < frames; i++) channel[i] *= master;
   return { sampleRate, channelData, loop: true };
 }

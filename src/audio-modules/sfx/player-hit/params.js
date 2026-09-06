@@ -8,7 +8,7 @@ export const params = Object.freeze({
   "seed": 73
 });
 
-const rules = {
+export const rules = {
   "sampleRate": [
     22050,
     96000,
