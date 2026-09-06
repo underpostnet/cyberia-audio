@@ -40,7 +40,7 @@ export async function dispatch(type, id, options = {}, output = {}) {
   const asset = await resolveAudioModule(type, id);
   const audio = validateAudioResult(await asset.render(options));
   // Both consumers receive the same render. Record first so device failures preserve the WAV.
-  const path = output.record ? await record(id, audio, output.path) : undefined;
+  const { path, manifestPath } = output.record ? await record(type, id, audio, output.path) : {};
   const playback = output.play === false ? undefined : await play(type, audio);
-  return { id, type, audio, path, playback };
+  return { id, type, audio, path, manifestPath, playback };
 }

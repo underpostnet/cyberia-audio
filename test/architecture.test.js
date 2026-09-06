@@ -1,8 +1,9 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve, sep } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { dispatch, listAssets, resolveAudioModule } from '../src/dispatcher.js';
 import { validateAudioResult } from '../src/validation.js';
 
@@ -133,6 +134,20 @@ describe('extension boundary', () => {
     const { audio } = await dispatch('sfx', 'test-extension', {}, { play: false });
     expect(audio.sampleRate).toBe(22050);
     expect(audio.channelData[0][1]).toBeCloseTo(0.2);
+
+    // A module with no manifest.json or params.js still records a valid pair.
+    const output = await mkdtemp(join(tmpdir(), 'cyberia-audio-extension-'));
+    const { path, manifestPath } = await dispatch('sfx', 'test-extension', {}, {
+      play: false, record: true, path: join(output, 'test-extension.wav'),
+    });
+    expect(manifestPath).toBe(join(output, 'test-extension.json'));
+    expect(JSON.parse(await readFile(manifestPath, 'utf8'))).toEqual({
+      id: 'test-extension', type: 'sfx', tags: [], author: '', version: '',
+      duration: 3 / 22050, sampleRate: 22050, channels: 1, loop: false,
+      audio: 'test-extension.wav', defaults: {}, parameters: {},
+    });
+    expect((await readFile(path)).toString('ascii', 0, 4)).toBe('RIFF');
+    await rm(output, { recursive: true, force: true });
     await rm(directory, { recursive: true });
   });
 });
