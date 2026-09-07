@@ -1,0 +1,12 @@
+{
+  "id": "explosion",
+  "bus": "sfx",
+  "tags": [
+    "impact",
+    "destruction",
+    "rumble"
+  ],
+  "author": "cyberia-audio",
+  "version": "0.1.0",
+  "duration": 1.8
+}

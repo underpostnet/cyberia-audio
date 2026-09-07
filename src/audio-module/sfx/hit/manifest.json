@@ -1,0 +1,12 @@
+{
+  "id": "hit",
+  "bus": "sfx",
+  "tags": [
+    "damage",
+    "negative",
+    "impact"
+  ],
+  "author": "cyberia-audio",
+  "version": "0.1.0",
+  "duration": 0.38
+}

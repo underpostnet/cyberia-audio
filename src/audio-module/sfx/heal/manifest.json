@@ -1,0 +1,12 @@
+{
+  "id": "heal",
+  "bus": "sfx",
+  "tags": [
+    "restoration",
+    "magic",
+    "positive"
+  ],
+  "author": "cyberia-audio",
+  "version": "0.1.0",
+  "duration": 1.5
+}
