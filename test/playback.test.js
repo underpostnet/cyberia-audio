@@ -64,7 +64,7 @@ describe('playback adapter', () => {
     expect(await first.done).toEqual({ stopped: true });
     expect(await second.playback.done).toEqual({ stopped: true });
   });
-  it('stops only the selected domain, and all playback on audio.stop()', async () => {
+  it('stops only the selected bus, and all playback on audio.stop()', async () => {
     // Both renders happen before either device opens. Rendering between the two plays would let
     // the first one run to completion and close itself, which is not what this is asserting.
     const [effect, phrase] = [await audio.sfx.render('explosion'), await audio.music.render('combat')];

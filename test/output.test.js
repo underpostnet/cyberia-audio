@@ -17,23 +17,26 @@ afterAll(() => rm(directory, { recursive: true, force: true }));
 const cli = (...args) => exec(process.execPath, [bin, ...args], { cwd: directory, timeout: 15000 });
 
 describe('CLI and WAV integration', () => {
-  it('exposes exactly two top-level domains', async () => {
+  it('dispatches from one entry point that takes the bus as an argument', async () => {
     const { stdout } = await cli('--help');
-    const commands = stdout.split('Commands:')[1].trim().split('\n').map((line) => line.trim().split(' ')[0]);
-    expect(commands).toEqual(['sfx', 'music']);
+    // One command, not one per bus: adding a bus must not add CLI surface.
+    expect(stdout).toContain('Usage: cyberia-audio [options] [bus-id] [id]');
+    expect(stdout).not.toContain('Commands:');
+    expect(stdout).toContain('audio bus to render from: music or sfx');
   });
-  for (const [type, id] of [
+  for (const [bus, id] of [
     ['sfx', 'coin'], ['sfx', 'shoot'], ['sfx', 'explosion'], ['sfx', 'heal'],
-    ['sfx', 'player-hit'], ['sfx', 'ui-click'],
+    ['sfx', 'hit'], ['sfx', 'ui-click'], ['sfx', 'footsteps'],
     ['music', 'exploration'], ['music', 'combat'], ['music', 'mystery'], ['music', 'victory'],
+    ['music', 'portal-cooldown'],
   ]) {
-    it(`${type} ${id}: uses the API render and writes records/${id}.wav`, async () => {
-      const { stdout, stderr } = await cli(type, id);
-      expect(stdout).toContain(`Recorded ${type}/${id}`);
-      expect(stdout).toContain(`Manifest ${type}/${id}`);
+    it(`${bus} ${id}: uses the API render and writes records/${id}.wav`, async () => {
+      const { stdout, stderr } = await cli(bus, id);
+      expect(stdout).toContain(`Recorded ${bus}/${id}`);
+      expect(stdout).toContain(`Manifest ${bus}/${id}`);
       expect(stderr).toBe('');
       const manifest = JSON.parse(await readFile(join(directory, 'records', `${id}.json`), 'utf8'));
-      expect(manifest).toMatchObject({ id, type, author: 'cyberia-audio', version: '0.1.0', audio: `${id}.wav` });
+      expect(manifest).toMatchObject({ id, bus, author: 'cyberia-audio', version: '0.1.0', audio: `${id}.wav` });
       expect(manifest.tags.length).toBeGreaterThan(0);
       expect(manifest.defaults.volume).toBeGreaterThan(0);
       expect(manifest.parameters.volume).toEqual({ min: 0, max: 1, integer: false });
@@ -41,7 +44,7 @@ describe('CLI and WAV integration', () => {
       expect(buffer.toString('ascii', 0, 4)).toBe('RIFF');
       expect(buffer.readUInt16LE(34)).toBe(16);
       const decoded = decodeWav(buffer);
-      const result = await audio[type].render(id);
+      const result = await audio[bus].render(id);
       expect(decoded.sampleRate).toBe(result.sampleRate);
       expect(decoded.channelData.length).toBe(result.channelData.length);
       expect(manifest.sampleRate).toBe(result.sampleRate);
@@ -61,7 +64,7 @@ describe('CLI and WAV integration', () => {
     await cli('sfx', 'coin', '--volume', '0');
     const decoded = decodeWav(await readFile(join(directory, 'records/coin.wav')));
     expect(decoded.channelData[0].every((sample) => sample === 0)).toBe(true);
-    const stems = ['coin', 'combat', 'exploration', 'explosion', 'heal', 'mystery', 'player-hit', 'shoot', 'ui-click', 'victory'];
+    const stems = ['coin', 'combat', 'exploration', 'explosion', 'footsteps', 'heal', 'hit', 'mystery', 'portal-cooldown', 'shoot', 'ui-click', 'victory'];
     expect((await readdir(join(directory, 'records'))).sort()).toEqual(
       stems.flatMap((stem) => [`${stem}.json`, `${stem}.wav`]).sort(),
     );
@@ -72,7 +75,7 @@ describe('CLI and WAV integration', () => {
     expect(stdout).toContain(relative);
     expect(stdout).toContain(join(directory, 'custom', 'combat.json'));
     expect(JSON.parse(await readFile(join(directory, 'custom', 'combat.json'), 'utf8')))
-      .toMatchObject({ id: 'combat', type: 'music', audio: 'combat.wav' });
+      .toMatchObject({ id: 'combat', bus: 'music', audio: 'combat.wav' });
     const decodedRelative = decodeWav(await readFile(relative));
     expect(decodedRelative.sampleRate).toBe(44100);
     expect(decodedRelative.channelData[0].length).toBe((await audio.music.render('combat')).channelData[0].length);
@@ -81,7 +84,7 @@ describe('CLI and WAV integration', () => {
     const decodedAbsolute = decodeWav(await readFile(absolute));
     expect(decodedAbsolute.sampleRate).toBe(44100);
     expect(JSON.parse(await readFile(join(directory, 'custom', 'victory.json'), 'utf8')))
-      .toMatchObject({ id: 'victory', type: 'music', audio: 'victory.wav' });
+      .toMatchObject({ id: 'victory', bus: 'music', audio: 'victory.wav' });
     expect(decodedAbsolute.channelData[0].length).toBe((await audio.music.render('victory')).channelData[0].length);
     expect((await readdir(directory + '/records')).includes('combat.wav')).toBe(true); // default path still used without -o
   });
@@ -90,7 +93,7 @@ describe('CLI and WAV integration', () => {
     const { stdout } = await exec(process.execPath, ['--input-type=module', '-e', code], { cwd: directory });
     expect(stdout.trim()).toBe(join(directory, 'records/coin.wav'));
     expect(JSON.parse(await readFile(join(directory, 'records/coin.json'), 'utf8')))
-      .toMatchObject({ id: 'coin', type: 'sfx', audio: 'coin.wav' });
+      .toMatchObject({ id: 'coin', bus: 'sfx', audio: 'coin.wav' });
   });
   it.each([
     ['sfx', 'laser'], ['sfx', 'exploration'], ['music', 'coin'], ['sfx', '../coin'],
@@ -115,7 +118,7 @@ describe('CLI and WAV integration', () => {
     }
   });
   it('uses --play as an explicit opt-in and rejects the old --no-play spelling', async () => {
-    const { stdout } = await cli('sfx', '--help');
+    const { stdout } = await cli('--help');
     expect(stdout).toContain('--play');
     await expect(cli('sfx', 'ui-click', '--no-play')).rejects.toMatchObject({ code: 1 });
   });
@@ -124,6 +127,6 @@ describe('CLI and WAV integration', () => {
     try { await cli('sfx', 'ui-click', '--loop'); } catch (error) {
       expect(error.stderr).toContain('--loop applies to playback');
     }
-    expect((await cli('sfx', '--help')).stdout).toContain('--loop');
+    expect((await cli('--help')).stdout).toContain('--loop');
   });
 });

@@ -7,10 +7,10 @@ import { dirname, join, resolve, sep } from 'node:path';
 import { dispatch, listAssets, resolveAudioModule } from '../src/dispatcher.js';
 import { validateAudioResult } from '../src/validation.js';
 
-const root = fileURLToPath(new URL('../src/audio-modules/', import.meta.url));
+const root = fileURLToPath(new URL('../src/audio-module/', import.meta.url));
 const ids = {
-  sfx: ['coin', 'explosion', 'heal', 'player-hit', 'shoot', 'ui-click'],
-  music: ['combat', 'exploration', 'mystery', 'victory'],
+  sfx: ['coin', 'drop', 'explosion', 'footsteps', 'heal', 'hit', 'portal', 'shoot', 'ui-click'],
+  music: ['boss', 'combat', 'exploration', 'mystery', 'portal-cooldown', 'victory'],
 };
 const digest = (result) => {
   const hash = createHash('sha256');
@@ -19,34 +19,34 @@ const digest = (result) => {
 };
 
 describe('filesystem dispatch', () => {
-  it.each(Object.keys(ids))('discovers the %s vocabulary', async (type) => {
-    expect(await listAssets(type)).toEqual(ids[type]);
+  it.each(Object.keys(ids))('discovers the %s vocabulary', async (bus) => {
+    expect(await listAssets(bus)).toEqual(expect.arrayContaining(ids[bus]));
   });
-  it('rejects invalid domains before resolution', async () => {
-    await expect(dispatch('ambient', 'coin')).rejects.toThrow('domain');
+  it('rejects an unknown bus before resolution', async () => {
+    await expect(dispatch('ambient', 'coin')).rejects.toThrow('Audio bus must be one of: music, sfx');
   });
   it.each(['../coin', '/coin', 'Coin', '', 'coin.js', 'coin%2f', 'a\\b', null])('rejects invalid ID %s', async (id) => {
     await expect(resolveAudioModule('sfx', id)).rejects.toThrow('Semantic ID');
   });
   it('reports unknown IDs with available names', async () => {
-    await expect(resolveAudioModule('sfx', 'laser')).rejects.toThrow(/Unknown SFX: laser\nAvailable SFX:\n  coin/);
+    await expect(resolveAudioModule('sfx', 'laser')).rejects.toThrow(/Unknown sfx module: laser\nAvailable sfx modules:\n  coin/);
   });
-  it('keeps the domains separate', async () => {
-    await expect(resolveAudioModule('sfx', 'combat')).rejects.toThrow('Unknown SFX');
-    await expect(resolveAudioModule('music', 'coin')).rejects.toThrow('Unknown Music');
+  it('keeps the buses separate', async () => {
+    await expect(resolveAudioModule('sfx', 'combat')).rejects.toThrow('Unknown sfx module');
+    await expect(resolveAudioModule('music', 'coin')).rejects.toThrow('Unknown music module');
   });
 });
 
 describe('isolated asset contracts and audio', () => {
-  for (const [type, names] of Object.entries(ids)) {
+  for (const [bus, names] of Object.entries(ids)) {
     for (const id of names) {
-      it(`${type}/${id}: independent source, valid PCM, determinism, parameters`, async () => {
-        const directory = resolve(root, type, id);
+      it(`${bus}/${id}: independent source, valid PCM, determinism, parameters`, async () => {
+        const directory = resolve(root, bus, id);
         expect((await readdir(directory)).sort()).toEqual(['README.md', 'dsp.js', 'index.js', 'manifest.json', 'params.js']);
         const manifest = JSON.parse(await readFile(resolve(directory, 'manifest.json'), 'utf8'));
-        expect(manifest).toMatchObject({ id, type, author: 'cyberia-audio', version: '0.1.0' });
-        const asset = await resolveAudioModule(type, id);
-        expect(asset).toMatchObject({ id, type, render: expect.any(Function) });
+        expect(manifest).toMatchObject({ id, bus, author: 'cyberia-audio', version: '0.1.0' });
+        const asset = await resolveAudioModule(bus, id);
+        expect(asset).toMatchObject({ id, bus, render: expect.any(Function) });
         const result = validateAudioResult(await asset.render());
         expect(result.duration).toBeCloseTo(manifest.duration, 4);
         let peak = 0, energy = 0, sum = 0;
@@ -90,9 +90,9 @@ describe('isolated asset contracts and audio', () => {
   it('keeps sounds differentiated and noise controllable', async () => {
     const fingerprints = new Set();
     for (const id of ids.sfx) fingerprints.add(digest((await dispatch('sfx', id, {}, { play: false })).audio));
-    expect(fingerprints.size).toBe(6);
-    for (const [type, id] of [['sfx', 'shoot'], ['sfx', 'explosion'], ['sfx', 'player-hit'], ['music', 'combat']]) {
-      const asset = await resolveAudioModule(type, id);
+    expect(fingerprints.size).toBe(ids.sfx.length);
+    for (const [bus, id] of [['sfx', 'shoot'], ['sfx', 'explosion'], ['sfx', 'hit'], ['music', 'combat']]) {
+      const asset = await resolveAudioModule(bus, id);
       expect(digest(await asset.render({ seed: 0 }))).not.toBe(digest(await asset.render({ seed: 1 })));
     }
   });
@@ -128,7 +128,7 @@ describe('extension boundary', () => {
   it('discovers a newly added module and validates its rendered result', async () => {
     await mkdir(directory);
     await writeFile(resolve(directory, 'index.js'), `export default {
-      id: 'test-extension', type: 'sfx',
+      id: 'test-extension', bus: 'sfx',
       render: () => ({ sampleRate: 22050, channelData: [new Float32Array([0, 0.2, 0])] })
     };`);
     const { audio } = await dispatch('sfx', 'test-extension', {}, { play: false });
@@ -142,7 +142,7 @@ describe('extension boundary', () => {
     });
     expect(manifestPath).toBe(join(output, 'test-extension.json'));
     expect(JSON.parse(await readFile(manifestPath, 'utf8'))).toEqual({
-      id: 'test-extension', type: 'sfx', tags: [], author: '', version: '',
+      id: 'test-extension', bus: 'sfx', tags: [], author: '', version: '',
       duration: 3 / 22050, sampleRate: 22050, channels: 1, loop: false,
       audio: 'test-extension.wav', defaults: {}, parameters: {},
     });

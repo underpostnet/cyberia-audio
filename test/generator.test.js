@@ -19,7 +19,7 @@ import {
   sweepStagingDirectories,
 } from '../src/generator/generate-module.js';
 
-const root = fileURLToPath(new URL('../src/audio-modules/', import.meta.url));
+const root = fileURLToPath(new URL('../src/audio-module/', import.meta.url));
 
 // The generated half only synthesizes: normalization, the volume law and the boundary fade belong
 // to the wrapper the pipeline appends.
@@ -63,7 +63,7 @@ const BIASED_LOOP_SYNTHESIS = `export function synthesize({ sampleRate, volume, 
 }`;
 
 const BRIEF = {
-  type: 'sfx',
+  bus: 'sfx',
   id: 'test-generated-chime',
   title: 'Test chime',
   tags: ['test', 'fixture', 'chime'],
@@ -79,7 +79,7 @@ const MONO_IN_STEREO_SYNTHESIS = BIASED_LOOP_SYNTHESIS.replace(
 );
 
 const MUSIC_BRIEF = {
-  type: 'music',
+  bus: 'music',
   id: 'test-generated-phrase',
   title: 'Test phrase',
   tags: ['test', 'fixture', 'loop'],
@@ -178,7 +178,7 @@ describe('generator units', () => {
   it('lays the key out ascending, so no chord is left inverted', async () => {
     // The bug this exists to prevent: mapping tonal's names onto one octave folds F minor back on
     // itself at C (53 55 56 58 48 49 51) and turns Fm into [53, 56, 48], root above its own fifth.
-    const directory = new URL('../src/audio-modules/music/.staging-test-grid-cccccccc/', import.meta.url);
+    const directory = new URL('../src/audio-module/music/.staging-test-grid-cccccccc/', import.meta.url);
     await mkdir(directory, { recursive: true });
     try {
       const source = musicalGridSource({ key: 'F minor', progression: ['Fm', 'Ab'], bars: 4 });
@@ -205,14 +205,14 @@ describe('generator units', () => {
   });
 
   it('stamps the house author and version into every manifest', () => {
-    expect(JSON.parse(manifestSource({ id: 'a-b', type: 'sfx', tags: ['x'], duration: 1 })))
-      .toEqual({ id: 'a-b', type: 'sfx', tags: ['x'], author: 'cyberia-audio', version: '0.1.0', duration: 1 });
+    expect(JSON.parse(manifestSource({ id: 'a-b', bus: 'sfx', tags: ['x'], duration: 1 })))
+      .toEqual({ id: 'a-b', bus: 'sfx', tags: ['x'], author: 'cyberia-audio', version: '0.1.0', duration: 1 });
   });
 
   it('composes every mechanical README sentence from the contract', () => {
     const markdown = readmeSource({
       id: 'blast-door',
-      type: 'sfx',
+      bus: 'sfx',
       prose: { summary: 'A heavy door.', useFor: 'Doors and gates', soundDesign: 'A slam and a ring.' },
       params: { sampleRate: 44100, volume: 0.8, weight: 0.7 },
       rules: { sampleRate: [22050, 96000, true], volume: [0, 1], weight: [0, 1] },
@@ -291,7 +291,7 @@ describe('module generation pipeline', () => {
     const result = await generateModule({ prompt: 'a small test chime', client, dryRun: true });
 
     expect(client.calls).toEqual(['1', '2', '3', '4']);
-    expect(result).toMatchObject({ type: 'sfx', id: 'test-generated-chime', repairs: 0, model: 'fake-model' });
+    expect(result).toMatchObject({ bus: 'sfx', id: 'test-generated-chime', repairs: 0, model: 'fake-model' });
     expect(Object.keys(result.files).sort()).toEqual(['README.md', 'dsp.js', 'index.js', 'manifest.json', 'params.js']);
     expect(result.measured).toMatchObject({ channels: 1, loop: false });
     expect(result.measured.duration).toBeCloseTo(0.4, 4);
@@ -300,7 +300,7 @@ describe('module generation pipeline', () => {
     expect(result.measured.peak).toBeCloseTo(0.8 * 0.98, 3);
 
     const manifest = JSON.parse(result.files['manifest.json']);
-    expect(manifest).toMatchObject({ id: 'test-generated-chime', type: 'sfx', author: 'cyberia-audio', version: '0.1.0' });
+    expect(manifest).toMatchObject({ id: 'test-generated-chime', bus: 'sfx', author: 'cyberia-audio', version: '0.1.0' });
     expect(manifest.duration).toBeCloseTo(result.measured.duration, 10);
     expect(result.files['params.js']).toContain('"sampleRate": 44100');
     expect(result.files['index.js']).toBe(indexSource());
@@ -419,15 +419,15 @@ describe('module generation pipeline', () => {
 
   it('sweeps staging directories an interrupted run left behind', async () => {
     // An hour-old leftover is abandoned; a fresh one may belong to a generation running right now.
-    const stale = new URL('../src/audio-modules/sfx/.staging-test-stale-aaaaaaaa/', import.meta.url);
-    const fresh = new URL('../src/audio-modules/sfx/.staging-test-fresh-bbbbbbbb/', import.meta.url);
+    const stale = new URL('../src/audio-module/sfx/.staging-test-stale-aaaaaaaa/', import.meta.url);
+    const fresh = new URL('../src/audio-module/sfx/.staging-test-fresh-bbbbbbbb/', import.meta.url);
     await mkdir(stale, { recursive: true });
     await mkdir(fresh, { recursive: true });
     const old = Date.now() / 1000 - 7200;
     await utimes(stale, old, old);
     try {
       expect(await sweepStagingDirectories('sfx')).toEqual(['.staging-test-stale-aaaaaaaa']);
-      const names = await readdir(new URL('../src/audio-modules/sfx/', import.meta.url));
+      const names = await readdir(new URL('../src/audio-module/sfx/', import.meta.url));
       expect(names).not.toContain('.staging-test-stale-aaaaaaaa');
       expect(names).toContain('.staging-test-fresh-bbbbbbbb');
       // Neither was ever dispatchable: the discovery filter rejects the name.
@@ -438,8 +438,8 @@ describe('module generation pipeline', () => {
     }
   });
 
-  it('refuses a domain it cannot dispatch', async () => {
-    await expect(generateModule({ prompt: 'a small test chime', type: 'ambient', client: fakeClient([]) })).rejects.toThrow('sfx');
+  it('refuses a bus it cannot dispatch', async () => {
+    await expect(generateModule({ prompt: 'a small test chime', bus: 'ambient', client: fakeClient([]) })).rejects.toThrow('Audio bus must be one of');
     await expect(generateModule({ prompt: '', client: fakeClient([]) })).rejects.toThrow('prompt');
   });
 });
