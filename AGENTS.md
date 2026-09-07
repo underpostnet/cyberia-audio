@@ -29,12 +29,12 @@ Comments state the live invariant in ≤1 line. The reader needs current behavio
 - Keep a single source of truth for asset contracts (manifest.json, params.js), runtime configuration, and CLI commands.
 - Reuse existing parameter validation rules from src/validation.js; do not duplicate parameter bounds checks or numeric assertion logic.
 - Keep generated output artifacts (records/\*.wav, records/\*.json) as read-only build outputs; never hand-edit generated WAV files or manifests.
-- Asset modules in src/audio-modules/ must remain strictly isolated: no asset module may import another asset module's DSP or code.
+- Asset modules in src/audio-module/ must remain strictly isolated: no asset module may import another asset module's DSP or code.
 - No dead code, legacy synthesis utilities, or unused dependencies.
 
 ## Architecture boundaries
 
-- src/audio-modules/{sfx|music}/{id}/ owns individual procedural synthesis, parameter ranges, and localized metadata.
+- src/audio-module/<bus-id>/<id>/ owns individual procedural synthesis, parameter ranges, and localized metadata.
 - src/runtime/ owns audio playback control (@audio/speaker), 16-bit PCM quantization, native RIFF/WAV encoding, and recorded manifest export.
 - src/generator/ owns AI module generation, Gemini staging, repair passes, and contract verification prior to installation.
 - src/validation.js owns shared numeric and option validation rules; it contains no DSP or synthesis logic.
@@ -43,4 +43,4 @@ Comments state the live invariant in ≤1 line. The reader needs current behavio
 ## Documentation hot paths
 
 - README.md — Core library usage, CLI options, API documentation, and vocabulary table.
-- src/audio-modules/{sfx|music}/{id}/README.md — Individual asset sound design, parameter range specifications, and usage examples.
+- src/audio-module/<bus-id>/<id>/README.md — Individual asset sound design, parameter range specifications, and usage examples.

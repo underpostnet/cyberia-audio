@@ -66,7 +66,7 @@ The filesystem acts as the asset registry. Audio modules are isolated from each 
 
 ```text
 src/
-├── audio-modules/   # Audio assets
+├── audio-module/    # Audio assets, one directory per bus
 ├── generator/       # AI generation
 └── runtime/         # Playback, PCM and WAV output
 
@@ -75,10 +75,12 @@ records/             # Generated audio artifacts
 
 ### Audio Asset Structure
 
-Below is the structure of an audio asset (e.g., `src/audio-modules/sfx/laser/` or `src/audio-modules/music/concrete-pulse/`):
+An asset lives at `src/audio-module/<bus-id>/<id>/` — the bus is the route it plays on, and the only
+vocabulary the engine, the CLI and the map configuration share (e.g. `src/audio-module/sfx/laser/` or
+`src/audio-module/music/concrete-pulse/`):
 
 ```text
-src/audio-modules/
+src/audio-module/
 
 └── sfx/
 
@@ -96,7 +98,7 @@ src/audio-modules/
 | **`index.js`**      | **Public API & Entry Point**   | Exposes the frozen asset object. Ties together the DSP rendering engine (`dsp.js`) and parameter resolver (`params.js`) to provide a standardized public interface for the runtime engine.                                                   |
 | **`dsp.js`**        | **Synthesis & Signal Engine**  | Implements all **Digital Signal Processing** (DSP). Contains `synthesize()` and `render()` functions, low-level math, oscillators, filters (e.g., SVF), envelopes, drum/synth engines, master effects (delay/limiter), and loop crossfading. |
 | **`params.js`**     | **Parameters & Rules**         | Defines default parameter values (`params`), numeric boundary constraints and type rules (`rules`), and exports `getParams()` to validate and resolve user options safely.                                                                   |
-| **`manifest.json`** | **Metadata & Registration**    | Contains asset metadata including unique id, type (`"sfx"` or `"music"`), tags, author, versioning, and loop duration.                                                                                                                       |
+| **`manifest.json`** | **Metadata & Registration**    | Contains asset metadata including unique id, bus (`"music"` or `"sfx"`), tags, author, versioning, and loop duration.                                                                                                                       |
 | **`README.md`**     | **Sound-Design Documentation** | Describes the sonic aesthetic, key musical/acoustic properties, parameter descriptions with valid ranges, and usage examples for JavaScript import and CLI execution.                                                                        |
 
 ### Core Design Principle
@@ -116,10 +118,10 @@ This modular architecture ensures that every sound effect or musical loop can be
 Game intent: audio.sfx.play('coin')
                 |
                 v
-      dispatcher: type + semantic ID
+      dispatcher: bus id + semantic ID
                 |
                 v
-       audio-modules/sfx/coin/index.js
+       audio-module/sfx/coin/index.js
                 |
                 v
        coin's own parameters and DSP
@@ -139,7 +141,7 @@ Every asset exposes the same module boundary:
 ```js
 export default {
   id: 'coin',
-  type: 'sfx',
+  bus: 'sfx',
   render(options = {}) {
     // return rendered audio
   },
@@ -213,7 +215,7 @@ node bin/index.js \
   --prompt "a heavy blast door slamming shut in a derelict station"
 ```
 
-Specify the domain explicitly:
+Specify the bus explicitly:
 
 ```sh
 node bin/index.js music \
@@ -267,18 +269,20 @@ The manifest contains the asset identity, render information and parameters asso
 
 ## Vocabulary
 
-| Domain | ID                                                           | Description              | Duration |
+| Bus    | ID                                                           | Description              | Duration |
 | :----- | :----------------------------------------------------------- | :----------------------- | -------: |
-| SFX    | [coin](src/audio-modules/sfx/coin/README.md)                 | Bright reward sound      |   0.42 s |
-| SFX    | [shoot](src/audio-modules/sfx/shoot/README.md)               | Sharp weapon transient   |   0.24 s |
-| SFX    | [explosion](src/audio-modules/sfx/explosion/README.md)       | Debris and low rumble    |    1.8 s |
-| SFX    | [heal](src/audio-modules/sfx/heal/README.md)                 | Ascending recovery sound |    1.5 s |
-| SFX    | [player-hit](src/audio-modules/sfx/player-hit/README.md)     | Damage feedback          |   0.38 s |
-| SFX    | [ui-click](src/audio-modules/sfx/ui-click/README.md)         | Short interface click    |  0.065 s |
-| Music  | [exploration](src/audio-modules/music/exploration/README.md) | Exploration ambience     |     20 s |
-| Music  | [combat](src/audio-modules/music/combat/README.md)           | Combat tension           |  13.33 s |
-| Music  | [mystery](src/audio-modules/music/mystery/README.md)         | Dark mystery loop        |  21.33 s |
-| Music  | [victory](src/audio-modules/music/victory/README.md)         | Victory fanfare          |    9.2 s |
+| sfx    | [coin](src/audio-module/sfx/coin/README.md)                 | Bright reward sound      |   0.42 s |
+| sfx    | [shoot](src/audio-module/sfx/shoot/README.md)               | Sharp weapon transient   |   0.24 s |
+| sfx    | [explosion](src/audio-module/sfx/explosion/README.md)       | Debris and low rumble    |    1.8 s |
+| sfx    | [heal](src/audio-module/sfx/heal/README.md)                 | Soft recovery swell      |    1.5 s |
+| sfx    | [hit](src/audio-module/sfx/hit/README.md)                   | Damage feedback          |   0.38 s |
+| sfx    | [ui-click](src/audio-module/sfx/ui-click/README.md)         | Short interface click    |  0.065 s |
+| sfx    | [footsteps](src/audio-module/sfx/footsteps/README.md)       | Walking gait cycle       |   0.62 s |
+| music  | [exploration](src/audio-module/music/exploration/README.md) | Exploration ambience     |     20 s |
+| music  | [combat](src/audio-module/music/combat/README.md)           | Combat tension           |  13.33 s |
+| music  | [mystery](src/audio-module/music/mystery/README.md)         | Dark mystery loop        |  21.33 s |
+| music  | [victory](src/audio-module/music/victory/README.md)         | Victory fanfare          |    9.2 s |
+| music  | [portal-cooldown](src/audio-module/music/portal-cooldown/README.md) | Portal charge bed |   3.75 s |
 
 See each asset README for its parameters and sound-design details.
 
