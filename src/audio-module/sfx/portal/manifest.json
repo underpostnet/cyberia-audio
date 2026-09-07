@@ -1,0 +1,11 @@
+{
+  "id": "portal",
+  "bus": "sfx",
+  "tags": [
+    "travel",
+    "transition"
+  ],
+  "author": "cyberia-audio",
+  "version": "0.1.0",
+  "duration": 0.8
+}

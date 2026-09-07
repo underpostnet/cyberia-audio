@@ -1,0 +1,12 @@
+{
+  "id": "portal-cooldown",
+  "bus": "music",
+  "tags": [
+    "charging",
+    "anticipation",
+    "teleport"
+  ],
+  "author": "cyberia-audio",
+  "version": "0.1.0",
+  "duration": 3.75
+}

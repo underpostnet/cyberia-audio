@@ -1,0 +1,11 @@
+{
+  "id": "drop",
+  "bus": "sfx",
+  "tags": [
+    "loot",
+    "impact"
+  ],
+  "author": "cyberia-audio",
+  "version": "0.1.0",
+  "duration": 0.28
+}

@@ -1,0 +1,11 @@
+{
+  "id": "boss",
+  "bus": "music",
+  "tags": [
+    "battle",
+    "danger"
+  ],
+  "author": "cyberia-audio",
+  "version": "0.1.0",
+  "duration": 8
+}

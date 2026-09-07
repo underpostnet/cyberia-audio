@@ -1,0 +1,12 @@
+{
+  "id": "footsteps",
+  "bus": "sfx",
+  "tags": [
+    "movement",
+    "gait",
+    "ambient"
+  ],
+  "author": "cyberia-audio",
+  "version": "0.1.0",
+  "duration": 0.62
+}
