@@ -3,13 +3,13 @@ import { interleave16 } from './pcm.js';
 
 const active = new Map();
 
-export function stop(type) {
-  for (const [handle, domain] of active) {
-    if (type === undefined || type === domain) handle.stop();
+export function stop(bus) {
+  for (const [handle, route] of active) {
+    if (bus === undefined || bus === route) handle.stop();
   }
 }
 
-export async function play(type, { sampleRate, channelData }, { loop = false } = {}) {
+export async function play(bus, { sampleRate, channelData }, { loop = false } = {}) {
   // Lazy loading keeps offline rendering independent of native audio initialization.
   const { default: speaker } = await import('@audio/speaker');
   let write;
@@ -30,7 +30,7 @@ export async function play(type, { sampleRate, channelData }, { loop = false } =
     stop() { stopped = true; close(); },
     done: undefined,
   };
-  active.set(handle, type);
+  active.set(handle, bus);
   handle.done = (async () => {
     try {
       const frames = channelData[0].length;

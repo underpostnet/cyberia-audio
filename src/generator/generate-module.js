@@ -2,7 +2,7 @@
  * AI-driven module generation pipeline.
  *
  * Turns one natural-language game intent into a complete audio module under
- * src/audio-modules/<type>/<id>/. The division of labour is deliberate: the model produces only
+ * src/audio-module/<bus-id>/<id>/. The division of labour is deliberate: the model produces only
  * what differs between modules — identity, parameter values, the synthesis body and three
  * paragraphs of prose — while every structure that is identical in every module is written here
  * from a template. The module boundary, the parameter file, the render wrapper, the manifest
@@ -20,13 +20,12 @@ import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/p
 import { Chord, Note, Scale } from 'tonal';
 import { GeminiClient } from './gemini-client.js';
 import { briefSystem, dspSystem, paramsSystem, proseSystem, repairSystem, signature } from './prompts.js';
-import { validateAudioResult } from '../validation.js';
+import { AUDIO_BUSES, validateAudioResult } from '../validation.js';
 
-const modulesRoot = new URL('../audio-modules/', import.meta.url);
+const moduleRoot = new URL('../audio-module/', import.meta.url);
 const validationModule = new URL('../validation.js', import.meta.url);
 const packageManifest = new URL('../../package.json', import.meta.url);
 
-export const MODULE_TYPES = Object.freeze(['sfx', 'music']);
 export const MODULE_FILES = Object.freeze(['README.md', 'dsp.js', 'index.js', 'manifest.json', 'params.js']);
 const AUTHOR = 'cyberia-audio';
 const VERSION = '0.1.0';
@@ -69,7 +68,7 @@ import manifest from './manifest.json' with { type: 'json' };
 
 export default Object.freeze({
   id: manifest.id,
-  type: manifest.type,
+  bus: manifest.bus,
   render(options = {}) { return render(getParams(options)); },
 });`;
 
@@ -223,8 +222,8 @@ export const dspSource = ({ synthesis, loop, plan }) =>
     renderWrapperSource({ loop }),
   ].join('\n\n');
 
-export const manifestSource = ({ id, type, tags, duration }) =>
-  JSON.stringify({ id, type, tags, author: AUTHOR, version: VERSION, duration }, null, 2);
+export const manifestSource = ({ id, bus, tags, duration }) =>
+  JSON.stringify({ id, bus, tags, author: AUTHOR, version: VERSION, duration }, null, 2);
 
 const range = ([min, max, integer]) => `${min}–${max}${integer ? ', integer' : ''}`;
 
@@ -233,7 +232,7 @@ const range = ([min, max, integer]) => `${min}–${max}${integer ? ', integer' :
  * parameter sentence, the contract paragraph and the usage examples are composed from the
  * contract itself, so every module documents the engine identically.
  */
-export const readmeSource = ({ id, type, prose, params, rules, meaning, measured, plan = null }) => {
+export const readmeSource = ({ id, bus, prose, params, rules, meaning, measured, plan = null }) => {
   const owned = Object.keys(params).filter((key) => !(key in BASE_PARAMS));
   const described = owned
     .map((key) => `\`${key}\` (${range(rules[key])}, default ${params[key]})${meaning[key] ? ` ${meaning[key]}` : ''}`)
@@ -267,20 +266,20 @@ ${shape} Rendering returns \`{ sampleRate, channelData: Float32Array[], loop }\`
 \`\`\`js
 import audio from 'cyberia-audio';
 
-const playback = await audio.${type}.play('${id}');
+const playback = await audio.${bus}.play('${id}');
 await playback.done;
-await audio.${type}.record('${id}'); // records/${id}.wav
+await audio.${bus}.record('${id}'); // records/${id}.wav
 \`\`\`
 
 \`\`\`sh
-cyberia-audio ${type} ${id}
+cyberia-audio ${bus} ${id}
 \`\`\`
 `;
 };
 
-/** Ids already taken in a domain: the model is shown them, and a collision is refused. */
-export async function listExistingIds(type, root = modulesRoot) {
-  const entries = await readdir(new URL(`${type}/`, root), { withFileTypes: true }).catch(() => []);
+/** Ids already taken on a bus: the model is shown them, and a collision is refused. */
+export async function listExistingIds(bus, root = moduleRoot) {
+  const entries = await readdir(new URL(`${bus}/`, root), { withFileTypes: true }).catch(() => []);
   return entries
     .filter((entry) => entry.isDirectory() && ID_PATTERN.test(entry.name))
     .map(({ name }) => name)
@@ -293,12 +292,12 @@ export async function listExistingIds(type, root = modulesRoot) {
  * A generation killed mid-call never reaches its own cleanup, and what it leaves is invisible to
  * the dispatcher but not to the person reading the tree. Only directories older than an hour are
  * swept, so a generation running alongside this one keeps its staging area.
- * @param {string} type - Domain directory to sweep.
- * @param {URL} [root=modulesRoot] - Audio module root.
+ * @param {string} bus - Bus directory to sweep.
+ * @param {URL} [root=moduleRoot] - Audio module root.
  * @returns {Promise<Array<string>>} The names that were removed.
  */
-export async function sweepStagingDirectories(type, root = modulesRoot) {
-  const parent = new URL(`${type}/`, root);
+export async function sweepStagingDirectories(bus, root = moduleRoot) {
+  const parent = new URL(`${bus}/`, root);
   const entries = await readdir(parent, { withFileTypes: true }).catch(() => []);
   const swept = [];
   for (const entry of entries) {
@@ -411,7 +410,7 @@ function glueIssues(source, params) {
  * Returns diagnostics rather than throwing: each one is written to be actionable both for the
  * operator reading the terminal and for the repair pass, which receives them verbatim.
  */
-export async function verifyModule(directory, { type, id, params = {}, allowedPackages = [], synthesis = '', plan = null }) {
+export async function verifyModule(directory, { bus, id, params = {}, allowedPackages = [], synthesis = '', plan = null }) {
   const issues = [];
   const files = new Set(await readdir(directory));
   for (const file of MODULE_FILES) if (file !== 'README.md' && !files.has(file)) issues.push(`missing ${file}`);
@@ -445,8 +444,8 @@ export async function verifyModule(directory, { type, id, params = {}, allowedPa
   } catch (error) {
     return { issues: [`the module failed to import: ${error.message}`] };
   }
-  if (!asset || asset.id !== id || asset.type !== type || typeof asset.render !== 'function') {
-    return { issues: [`index.js must export { id: '${id}', type: '${type}', render() }`] };
+  if (!asset || asset.id !== id || asset.bus !== bus || typeof asset.render !== 'function') {
+    return { issues: [`index.js must export { id: '${id}', bus: '${bus}', render() }`] };
   }
 
   // Imported rather than pattern-matched: a generated synthesize may be a declaration, a const or
@@ -595,7 +594,7 @@ const writeStage = (directory, files) =>
  *
  * @param {object} params
  * @param {string} params.prompt - The game intent, in natural language.
- * @param {'sfx'|'music'} [params.type] - Forces the domain instead of inferring it from the prompt.
+ * @param {'music'|'sfx'} [params.bus] - Forces the bus instead of inferring it from the prompt.
  * @param {string} [params.id] - Forces the semantic id instead of deriving it from the prompt.
  * @param {string} [params.model] - Gemini model id.
  * @param {number} [params.temperature] - Sampling temperature.
@@ -608,7 +607,7 @@ const writeStage = (directory, files) =>
  */
 export async function generateModule({
   prompt,
-  type: requestedType,
+  bus: requestedBus,
   id: requestedId,
   model,
   temperature,
@@ -621,8 +620,8 @@ export async function generateModule({
   if (typeof prompt !== 'string' || prompt.trim().length < 3) {
     throw new Error('A prompt of at least three characters is required to generate a module.');
   }
-  if (requestedType !== undefined && !MODULE_TYPES.includes(requestedType)) {
-    throw new Error(`Audio domain must be "sfx" or "music"; received "${requestedType}".`);
+  if (requestedBus !== undefined && !AUDIO_BUSES.includes(requestedBus)) {
+    throw new Error(`Audio bus must be one of: ${AUDIO_BUSES.join(', ')}; received "${requestedBus}".`);
   }
   // Constructed only once the request itself is sound, so a malformed call is reported as such
   // rather than as a missing API key.
@@ -636,13 +635,13 @@ export async function generateModule({
 
   log('Stage 1/4  identity');
   const vocabulary = await Promise.all(
-    (requestedType ? [requestedType] : MODULE_TYPES).map(async (name) => `${name}: ${(await listExistingIds(name)).join(' ')}`),
+    (requestedBus ? [requestedBus] : AUDIO_BUSES).map(async (name) => `${name}: ${(await listExistingIds(name)).join(' ')}`),
   );
   const brief = await ask(
-    briefSystem({ type: requestedType, id: fixedId }),
+    briefSystem({ bus: requestedBus, id: fixedId }),
     [
       `Game intent: ${intent}`,
-      requestedType ? `Domain is fixed: ${requestedType}` : '',
+      requestedBus ? `Bus is fixed: ${requestedBus}` : '',
       fixedId ? `Id is fixed: ${fixedId}` : '',
       `Taken ids — ${vocabulary.join(' | ')}`,
     ]
@@ -650,19 +649,19 @@ export async function generateModule({
       .join('\n'),
   );
 
-  const type = requestedType ?? brief.type;
-  if (!MODULE_TYPES.includes(type)) throw new Error(`The model chose an unknown domain: ${JSON.stringify(brief.type)}`);
+  const bus = requestedBus ?? brief.bus;
+  if (!AUDIO_BUSES.includes(bus)) throw new Error(`The model chose an unknown bus: ${JSON.stringify(brief.bus)}`);
   const id = fixedId || slugify(brief.id);
   if (!ID_PATTERN.test(id)) throw new Error(`The model chose an unusable semantic id: ${JSON.stringify(brief.id)}`);
 
   // Refused before any further token is spent, and before anything is written.
-  const target = new URL(`${type}/${id}/`, modulesRoot);
+  const target = new URL(`${bus}/${id}/`, moduleRoot);
   if (!dryRun && (await exists(target)) && !force) {
-    throw new Error(`${type}/${id} already exists. Pass --force to replace it, or --id to name a new module.`);
+    throw new Error(`${bus}/${id} already exists. Pass --force to replace it, or --id to name a new module.`);
   }
-  const abandoned = await sweepStagingDirectories(type);
+  const abandoned = await sweepStagingDirectories(bus);
   if (abandoned.length) log(`           swept ${abandoned.length} staging director${abandoned.length === 1 ? 'y' : 'ies'} an interrupted run left behind`);
-  const loop = type === 'music';
+  const loop = 'music' === bus;
   const tags = (Array.isArray(brief.tags) ? brief.tags : []).map(String).filter(Boolean);
   // A phrase is measured in bars, not in seconds: the plan decides its length, and every value in
   // it has been resolved against tonal, so the grid the synthesis plays on cannot be nonsense.
@@ -723,18 +722,18 @@ export async function generateModule({
     for (let attempt = 0; attempt <= repairs; attempt++) {
       // A fresh directory per attempt: ES module URLs are cached for the life of the process, so
       // a repaired dsp.js re-imported under a path already loaded would return the rejected code.
-      const staging = new URL(`${type}/${STAGING_PREFIX}${id}-${randomUUID().slice(0, 8)}/`, modulesRoot);
+      const staging = new URL(`${bus}/${STAGING_PREFIX}${id}-${randomUUID().slice(0, 8)}/`, moduleRoot);
       staged.push(staging);
       await mkdir(staging, { recursive: true });
       await writeStage(staging, {
-        'manifest.json': manifestSource({ id, type, tags, duration: seconds }),
+        'manifest.json': manifestSource({ id, bus, tags, duration: seconds }),
         'params.js': paramsSource(contract),
         'dsp.js': dspSource({ synthesis, loop, plan }),
         'index.js': indexSource(),
       });
 
       const { issues, measured } = await verifyModule(staging, {
-        type,
+        bus,
         id,
         params: contract.params,
         allowedPackages,
@@ -776,10 +775,10 @@ export async function generateModule({
     );
 
     const files = {
-      'manifest.json': manifestSource({ id, type, tags, duration: verified.measured.duration }),
+      'manifest.json': manifestSource({ id, bus, tags, duration: verified.measured.duration }),
       'README.md': readmeSource({
         id,
-        type,
+        bus,
         prose: {
           summary: String(prose.summary ?? brief.title ?? id).trim(),
           useFor: String(prose.useFor ?? '').trim().replace(/\.$/, ''),
@@ -793,12 +792,12 @@ export async function generateModule({
     await writeStage(verified.staging, files);
 
     if (dryRun) {
-      log(`Dry run    ${type}/${id} verified and discarded`);
+      log(`Dry run    ${bus}/${id} verified and discarded`);
     } else {
       if (await exists(target)) await rm(target, { recursive: true, force: true });
       await rename(verified.staging, target);
       staged.splice(staged.indexOf(verified.staging), 1);
-      log(`Installed  src/audio-modules/${type}/${id}/`);
+      log(`Installed  src/audio-module/${bus}/${id}/`);
     }
 
     const written = Object.fromEntries(
@@ -810,10 +809,10 @@ export async function generateModule({
       ),
     );
     return {
-      type,
+      bus,
       id,
       brief,
-      directory: dryRun ? null : new URL(`${type}/${id}/`, modulesRoot).pathname,
+      directory: dryRun ? null : new URL(`${bus}/${id}/`, moduleRoot).pathname,
       files: written,
       measured: verified.measured,
       repairs: verified.attempt,

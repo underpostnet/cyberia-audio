@@ -1,11 +1,11 @@
 import { dispatch } from './dispatcher.js';
 import { stop } from './runtime/playback.js';
 
-const domain = (type) => Object.freeze({
-  play: async (id, options) => (await dispatch(type, id, options)).playback,
-  render: async (id, options) => (await dispatch(type, id, options, { play: false })).audio,
-  record: async (id, options) => (await dispatch(type, id, options, { play: false, record: true })).path,
-  stop: () => stop(type),
+const routes = (bus) => Object.freeze({
+  play: async (id, options) => (await dispatch(bus, id, options)).playback,
+  render: async (id, options) => (await dispatch(bus, id, options, { play: false })).audio,
+  record: async (id, options) => (await dispatch(bus, id, options, { play: false, record: true })).path,
+  stop: () => stop(bus),
 });
 
-export default Object.freeze({ sfx: domain('sfx'), music: domain('music'), stop: () => stop() });
+export default Object.freeze({ sfx: routes('sfx'), music: routes('music'), stop: () => stop() });

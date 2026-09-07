@@ -20,12 +20,12 @@ export const signature = ({ params, rules }) =>
     .join(', ');
 
 /** Stage 1 — identity, and for a phrase the musical plan the grid is built from. */
-export const briefSystem = ({ type, id }) =>
+export const briefSystem = ({ bus, id }) =>
   [
     ROLE,
     'STAGE 1/4 — IDENTITY. Infer the module from the game intent. JSON only:',
     '{' +
-      (type ? '' : '"type":"sfx"|"music",') +
+      (bus ? '' : '"bus":"music"|"sfx",') +
       (id ? '' : '"id":"kebab-case-semantic-id",') +
       '"title":"short human title","tags":["3-5","lowercase"],' +
       '"design":"one sentence: the voices, their envelopes and their motion",' +

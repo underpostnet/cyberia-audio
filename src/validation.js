@@ -21,8 +21,11 @@ export function resolveParams(options, defaults, rules) {
   return params;
 }
 
-export function validateIdentity(type, id) {
-  if (type !== 'sfx' && type !== 'music') throw new TypeError('Audio domain must be "sfx" or "music".');
+/** The two audio routes, and the `src/audio-module/<bus-id>/` directory each one is authored in. */
+export const AUDIO_BUSES = Object.freeze(['music', 'sfx']);
+
+export function validateIdentity(bus, id) {
+  if (!AUDIO_BUSES.includes(bus)) throw new TypeError(`Audio bus must be one of: ${AUDIO_BUSES.join(', ')}.`);
   if (typeof id !== 'string' || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(id)) {
     throw new TypeError('Semantic ID must contain lowercase words separated by hyphens.');
   }

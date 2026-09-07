@@ -39,12 +39,12 @@ export function encodeWav({ sampleRate, channelData }) {
   return Buffer.concat([header, samples]);
 }
 
-export async function record(type, id, result, outputPath = resolve('records', `${id}.wav`)) {
-  validateIdentity(type, id);
+export async function record(bus, id, result, outputPath = resolve('records', `${id}.wav`)) {
+  validateIdentity(bus, id);
   const audio = validateAudioResult(result);
   // Absolute paths are written as given; relative paths resolve against the current working directory.
   const path = resolve(outputPath);
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, encodeWav(audio));
-  return { path, manifestPath: await writeManifest(type, id, audio, path) };
+  return { path, manifestPath: await writeManifest(bus, id, audio, path) };
 }
