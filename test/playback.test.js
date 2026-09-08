@@ -58,7 +58,7 @@ describe('playback adapter', () => {
   it('public API and dispatcher both use the same runtime', async () => {
     const first = await audio.sfx.play('coin', { volume: 0.1 });
     first.stop();
-    const second = await dispatch('music', 'victory', { bpm: 160 });
+    const second = await dispatch('sfx', 'victory', { duration: 1.2 });
     expect(speaker).toHaveBeenCalledTimes(2);
     second.playback.stop();
     expect(await first.done).toEqual({ stopped: true });

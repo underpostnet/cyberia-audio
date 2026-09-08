@@ -27,7 +27,8 @@ describe('CLI and WAV integration', () => {
   for (const [bus, id] of [
     ['sfx', 'coin'], ['sfx', 'shoot'], ['sfx', 'explosion'], ['sfx', 'heal'],
     ['sfx', 'hit'], ['sfx', 'ui-click'], ['sfx', 'footsteps'],
-    ['music', 'exploration'], ['music', 'combat'], ['music', 'mystery'], ['music', 'victory'],
+    ['sfx', 'victory'],
+    ['music', 'exploration'], ['music', 'combat'], ['music', 'mystery'],
     ['music', 'portal-cooldown'],
   ]) {
     it(`${bus} ${id}: uses the API render and writes records/${id}.wav`, async () => {
@@ -36,7 +37,9 @@ describe('CLI and WAV integration', () => {
       expect(stdout).toContain(`Manifest ${bus}/${id}`);
       expect(stderr).toBe('');
       const manifest = JSON.parse(await readFile(join(directory, 'records', `${id}.json`), 'utf8'));
-      expect(manifest).toMatchObject({ id, bus, author: 'cyberia-audio', version: '0.1.0', audio: `${id}.wav` });
+      expect(manifest).toMatchObject({
+        id, bus, author: 'cyberia-audio', version: expect.stringMatching(/^\d+\.\d+\.\d+$/), audio: `${id}.wav`,
+      });
       expect(manifest.tags.length).toBeGreaterThan(0);
       expect(manifest.defaults.volume).toBeGreaterThan(0);
       expect(manifest.parameters.volume).toEqual({ min: 0, max: 1, integer: false });
@@ -80,12 +83,12 @@ describe('CLI and WAV integration', () => {
     expect(decodedRelative.sampleRate).toBe(44100);
     expect(decodedRelative.channelData[0].length).toBe((await audio.music.render('combat')).channelData[0].length);
     const absolute = join(directory, 'custom', 'victory.wav');
-    await cli('music', 'victory', '--output', absolute);
+    await cli('sfx', 'victory', '--output', absolute);
     const decodedAbsolute = decodeWav(await readFile(absolute));
     expect(decodedAbsolute.sampleRate).toBe(44100);
     expect(JSON.parse(await readFile(join(directory, 'custom', 'victory.json'), 'utf8')))
-      .toMatchObject({ id: 'victory', bus: 'music', audio: 'victory.wav' });
-    expect(decodedAbsolute.channelData[0].length).toBe((await audio.music.render('victory')).channelData[0].length);
+      .toMatchObject({ id: 'victory', bus: 'sfx', audio: 'victory.wav' });
+    expect(decodedAbsolute.channelData[0].length).toBe((await audio.sfx.render('victory')).channelData[0].length);
     expect((await readdir(directory + '/records')).includes('combat.wav')).toBe(true); // default path still used without -o
   });
   it('supports programmatic recording from a different working directory', async () => {

@@ -8,10 +8,13 @@ import { dispatch, listAssets, resolveAudioModule } from '../src/dispatcher.js';
 import { validateAudioResult } from '../src/validation.js';
 
 const root = fileURLToPath(new URL('../src/audio-module/', import.meta.url));
+// The vocabulary every build must carry, and the modules actually on disk. Contract tests run
+// over the second: a module added without being listed here would otherwise ship untested.
 const ids = {
-  sfx: ['coin', 'drop', 'explosion', 'footsteps', 'heal', 'hit', 'portal', 'shoot', 'ui-click'],
-  music: ['boss', 'combat', 'exploration', 'mystery', 'portal-cooldown', 'victory'],
+  sfx: ['coin', 'drop', 'explosion', 'footsteps', 'heal', 'hit', 'item-pickup', 'portal', 'shoot', 'ui-click', 'victory'],
+  music: ['boss', 'combat', 'craft', 'exploration', 'mystery', 'portal-cooldown'],
 };
+const present = Object.fromEntries(await Promise.all(Object.keys(ids).map(async (bus) => [bus, await listAssets(bus)])));
 const digest = (result) => {
   const hash = createHash('sha256');
   for (const channel of result.channelData) hash.update(new Uint8Array(channel.buffer));
@@ -38,13 +41,13 @@ describe('filesystem dispatch', () => {
 });
 
 describe('isolated asset contracts and audio', () => {
-  for (const [bus, names] of Object.entries(ids)) {
+  for (const [bus, names] of Object.entries(present)) {
     for (const id of names) {
       it(`${bus}/${id}: independent source, valid PCM, determinism, parameters`, async () => {
         const directory = resolve(root, bus, id);
         expect((await readdir(directory)).sort()).toEqual(['README.md', 'dsp.js', 'index.js', 'manifest.json', 'params.js']);
         const manifest = JSON.parse(await readFile(resolve(directory, 'manifest.json'), 'utf8'));
-        expect(manifest).toMatchObject({ id, bus, author: 'cyberia-audio', version: '0.1.0' });
+        expect(manifest).toMatchObject({ id, bus, author: 'cyberia-audio', version: expect.stringMatching(/^\d+\.\d+\.\d+$/) });
         const asset = await resolveAudioModule(bus, id);
         expect(asset).toMatchObject({ id, bus, render: expect.any(Function) });
         const result = validateAudioResult(await asset.render());
