@@ -3,6 +3,11 @@ import { Note } from 'tonal';
 // Helper to convert note names (e.g. 'F2', 'Ab2') or MIDI numbers to precise frequency in Hz
 const frequency = (note) => (typeof note === 'string' ? Note.freq(note) || 440 : 440 * 2 ** ((note - 69) / 12));
 
+// Exact one-pole coefficient, always in (0,1). The 2*pi*fc/sr approximation only holds while the
+// corner sits far below the rate: at 22.05 kHz the hat's 7.2 kHz corner pushes it past 2, where
+// the filter diverges into NaN instead of smoothing.
+const onePole = (cutoffHz, sampleRate) => 1 - Math.exp((-2 * Math.PI * cutoffHz) / sampleRate);
+
 export function render({ sampleRate, volume, bpm, rounds, intensity, seed }) {
   const beat = 60 / bpm;
   const frames = Math.round(rounds * 16 * beat * sampleRate);
@@ -41,7 +46,7 @@ export function render({ sampleRate, volume, bpm, rounds, intensity, seed }) {
 
     // Sub-rumble tail filtered cleanly without low distortion
     let subLp = 0;
-    const lpCutoff = (2 * Math.PI * 140) / sampleRate;
+    const lpCutoff = onePole(140, sampleRate);
     place(atBeat + 0.14, 0.4, 0, (t) => {
       const subPhase = 2 * Math.PI * f0 * t;
       const rawRumble = Math.sin(subPhase) + noise() * 0.05;
@@ -55,7 +60,7 @@ export function render({ sampleRate, volume, bpm, rounds, intensity, seed }) {
   function hat(atBeat, open = false, pan = 0, gain = 1) {
     let hpState = 0;
     const cutoff = 7200;
-    const alpha = (2 * Math.PI * cutoff) / sampleRate;
+    const alpha = onePole(cutoff, sampleRate);
     place(atBeat, open ? 0.2 : 0.045, pan, (t) => {
       const metal = Math.sin(2 * Math.PI * 4120 * t) * 0.2 + Math.sin(2 * Math.PI * 6200 * t) * 0.2 + noise() * 0.6;
       hpState += alpha * (metal - hpState);
@@ -68,7 +73,7 @@ export function render({ sampleRate, volume, bpm, rounds, intensity, seed }) {
   // 3. Tuned Industrial Clap
   function clap(atBeat, pan = 0.05, gain = 1) {
     let lpState = 0;
-    const alpha = (2 * Math.PI * 2200) / sampleRate;
+    const alpha = onePole(2200, sampleRate);
     place(atBeat, 0.2, pan, (t) => {
       const snap = t < 0.01 ? (Math.sin(t * 1800) > 0 ? 0.5 : -0.5) : 0;
       const body = snap + noise() * 0.65;
