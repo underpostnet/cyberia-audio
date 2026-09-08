@@ -1,0 +1,12 @@
+{
+  "id": "craft",
+  "bus": "music",
+  "tags": [
+    "crafting",
+    "synthesis",
+    "energy"
+  ],
+  "author": "cyberia-audio",
+  "version": "0.3.0",
+  "duration": 5
+}
