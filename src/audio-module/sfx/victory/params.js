@@ -2,9 +2,10 @@ import { resolveParams } from '../../../validation.js';
 
 export const params = Object.freeze({
   "sampleRate": 44100,
-  "volume": 0.57,
-  "bpm": 120,
-  "brilliance": 0.7
+  "volume": 0.5,
+  "duration": 1.5,
+  "sparkle": 14,
+  "seed": 5310
 });
 
 export const rules = {
@@ -17,13 +18,19 @@ export const rules = {
     0,
     1
   ],
-  "bpm": [
-    90,
-    160
+  "duration": [
+    0.8,
+    2.5
   ],
-  "brilliance": [
+  "sparkle": [
     0,
-    1
+    32,
+    true
+  ],
+  "seed": [
+    0,
+    4294967295,
+    true
   ]
 };
 

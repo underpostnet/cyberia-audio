@@ -1,0 +1,12 @@
+{
+  "id": "victory",
+  "bus": "sfx",
+  "tags": [
+    "celebration",
+    "reward",
+    "sparkle"
+  ],
+  "author": "cyberia-audio",
+  "version": "0.3.0",
+  "duration": 1.5
+}
