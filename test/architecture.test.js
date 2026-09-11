@@ -11,7 +11,7 @@ const root = fileURLToPath(new URL('../src/audio-module/', import.meta.url));
 // The vocabulary every build must carry, and the modules actually on disk. Contract tests run
 // over the second: a module added without being listed here would otherwise ship untested.
 const ids = {
-  sfx: ['coin', 'drop', 'explosion', 'footsteps', 'heal', 'hit', 'item-pickup', 'portal', 'shoot', 'ui-click', 'victory'],
+  sfx: ['coin', 'death', 'drop', 'explosion', 'footsteps', 'heal', 'hit', 'item-pickup', 'level-up', 'portal', 'shoot', 'ui-click', 'victory'],
   music: ['boss', 'combat', 'craft', 'exploration', 'mystery', 'portal-cooldown'],
 };
 const present = Object.fromEntries(await Promise.all(Object.keys(ids).map(async (bus) => [bus, await listAssets(bus)])));

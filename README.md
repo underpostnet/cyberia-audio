@@ -278,6 +278,8 @@ The manifest contains the asset identity, render information and parameters asso
 | sfx    | [hit](src/audio-module/sfx/hit/README.md)                   | Damage feedback          |   0.38 s |
 | sfx    | [ui-click](src/audio-module/sfx/ui-click/README.md)         | Short interface click    |  0.065 s |
 | sfx    | [footsteps](src/audio-module/sfx/footsteps/README.md)       | Walking gait cycle       |   0.62 s |
+| sfx    | [level-up](src/audio-module/sfx/level-up/README.md)         | Rising level cue         |    1.4 s |
+| sfx    | [death](src/audio-module/sfx/death/README.md)               | Defeat impact and fade   |    2.2 s |
 | music  | [exploration](src/audio-module/music/exploration/README.md) | Exploration ambience     |     20 s |
 | music  | [combat](src/audio-module/music/combat/README.md)           | Combat tension           |  13.33 s |
 | music  | [mystery](src/audio-module/music/mystery/README.md)         | Dark mystery loop        |  21.33 s |

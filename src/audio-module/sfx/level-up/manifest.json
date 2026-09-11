@@ -1,0 +1,12 @@
+{
+  "id": "level-up",
+  "bus": "sfx",
+  "tags": [
+    "progression",
+    "reward",
+    "ascend"
+  ],
+  "author": "cyberia-audio",
+  "version": "0.1.0",
+  "duration": 1.8
+}

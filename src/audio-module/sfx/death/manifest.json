@@ -1,0 +1,8 @@
+{
+  "id": "death",
+  "bus": "sfx",
+  "tags": ["defeat", "death", "combat", "mmo", "rpg", "kill", "creature", "monster"],
+  "author": "cyberia-audio",
+  "version": "0.2.0",
+  "duration": 2.2
+}
