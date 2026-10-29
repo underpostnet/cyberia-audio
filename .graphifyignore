@@ -1,0 +1,3 @@
+# Allowlist: scan src/ only.
+/*
+!/src/
