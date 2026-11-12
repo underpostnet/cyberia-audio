@@ -34,12 +34,12 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@audio/speaker": "^2.3.3",
+    "@audio/speaker": "^2.5.1",
     "commander": "^14.0.0",
     "dotenv": "^17.4.2",
-    "tonal": "^6.4.3"
+    "tonal": "^6.5.1"
   },
   "devDependencies": {
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }
