@@ -36,7 +36,7 @@
   "dependencies": {
     "@audio/speaker": "^2.3.3",
     "commander": "^15.1.0",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.10",
     "tonal": "^6.4.3"
   },
   "devDependencies": {
